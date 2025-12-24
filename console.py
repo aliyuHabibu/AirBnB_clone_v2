@@ -43,48 +43,80 @@ class HBNBCommand(cmd.Cmd):
         """
         _cmd = _cls = _id = _args = ''  # initialize line elements
 
+        # scan for '='s
+        if ('=' in line):
+            try:
+                pline = line.strip().split(' ')
+
+                pline = [char for char in pline if char != '']
+                # isolate <command>
+                _cmd = pline[0]
+                if _cmd not in HBNBCommand.dot_cmds:
+                    raise Exception
+
+                # isolate <class name>
+                _cls = pline[1]
+
+                # Now extract everyother given (kwargs)
+                _args = {}
+
+                kws = pline[2:]
+                for kw in kws:
+                    # Just assuming perfect kwargs are given
+                    kw = kw.replace('"', '').split('=')
+                    try:
+                        value = int(kw[1])
+                    except ValueError:
+                        try:
+                            value = float(kw[1])
+                        except ValueError:
+                            value = str(kw[1])
+                    finally:
+                        _args[kw[0]] = value
+                line = ' '.join([_cmd, _cls, str(_args).replace(" ", "")])
+            except Exception as e:
+                print(e)
         # scan for general formating - i.e '.', '(', ')'
-        if not ('.' in line and '(' in line and ')' in line):
-            return line
+        elif ('.' in line and '(' in line and ')' in line):
+            try:  # parse line left to right
+                pline = line[:]  # parsed line
 
-        try:  # parse line left to right
-            pline = line[:]  # parsed line
+                # isolate <class name>
+                _cls = pline[:pline.find('.')]
 
-            # isolate <class name>
-            _cls = pline[:pline.find('.')]
+                # isolate and validate <command>
+                _cmd = pline[pline.find('.') + 1:pline.find('(')]
+                if _cmd not in HBNBCommand.dot_cmds:
+                    raise Exception
 
-            # isolate and validate <command>
-            _cmd = pline[pline.find('.') + 1:pline.find('(')]
-            if _cmd not in HBNBCommand.dot_cmds:
-                raise Exception
-
-            # if parantheses contain arguments, parse them
-            pline = pline[pline.find('(') + 1:pline.find(')')]
-            if pline:
-                # partition args: (<id>, [<delim>], [<*args>])
-                pline = pline.partition(', ')  # pline convert to tuple
-
-                # isolate _id, stripping quotes
-                _id = pline[0].replace('\"', '')
-                # possible bug here:
-                # empty quotes register as empty _id when replaced
-
-                # if arguments exist beyond _id
-                pline = pline[2].strip()  # pline is now str
+                # if parantheses contain arguments, parse them
+                pline = pline[pline.find('(') + 1:pline.find(')')]
                 if pline:
-                    # check for *args or **kwargs
-                    if pline[0] == '{' and pline[-1] == '}'\
-                            and type(eval(pline)) is dict:
-                        _args = pline
-                    else:
-                        _args = pline.replace(',', '')
-                        # _args = _args.replace('\"', '')
-            line = ' '.join([_cmd, _cls, _id, _args])
+                    # partition args: (<id>, [<delim>], [<*args>])
+                    pline = pline.partition(', ')  # pline convert to tuple
 
-        except Exception as mess:
-            pass
-        finally:
-            return line
+                    # isolate _id, stripping quotes
+                    _id = pline[0].replace('\"', '')
+                    # possible bug here:
+                    # empty quotes register as empty _id when replaced
+
+                    # if arguments exist beyond _id
+                    pline = pline[2].strip()  # pline is now str
+                    if pline:
+                        # check for *args or **kwargs
+                        if pline[0] == '{' and pline[-1] == '}'\
+                                and type(eval(pline)) is dict:
+                            _args = pline
+                        else:
+                            _args = pline.replace(',', '')
+                line = ' '.join([_cmd, _cls, _id, _args])
+
+            except Exception:
+                pass
+            finally:
+                return line
+
+        return line
 
     def postcmd(self, stop, line):
         """Prints if isatty is false"""
@@ -115,15 +147,26 @@ class HBNBCommand(cmd.Cmd):
 
     def do_create(self, args):
         """ Create an object of any class"""
+
+        # now almost properly formated arg
+        args = args.split(" ")
+        # Re-format arg to decode spaces encoded as "_"
+        args = [arg.replace("_", " ") for arg in args]
+        # args is empty? no class specified!
         if not args:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
+        # if specified class doesn't exist in the database
+        elif args[0] not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
+        # Include more parameters, aside the class ?
+        if len(args) > 1:
+            new_instance = HBNBCommand.classes[args[0]](**eval(args[1]))
+        else:  #: No, Not Really! just pure unadulterated object
+            new_instance = HBNBCommand.classes[args[0]]()
         print(new_instance.id)
+        # store to file
         storage.save()
 
     def help_create(self):
