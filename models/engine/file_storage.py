@@ -5,16 +5,32 @@ import json
 
 class FileStorage:
     """This class manages storage of hbnb models in JSON format"""
+
     __file_path = 'file.json'
     __objects = {}
 
-    def all(self):
-        """Returns a dictionary of models currently in storage"""
+    def all(self, cls=None):
+        """Returns a dictionary of All/One class if cls
+        is specified
+        """
+
+        # cls is specified ?
+        if cls:
+            filtered_objects = {}
+            # start, iterating
+            for key, value in FileStorage.__objects.items():
+                # now check to filter
+                if cls in key:
+                    filtered_objects[key] = value
+            return filtered_objects
+
+        # cls not specified, return all objects
+        # print(FileStorage.__objects)
         return FileStorage.__objects
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
-        self.all().update({obj.to_dict()['__class__'] + '.' + obj.id: obj})
+        self.__objects.update({obj.to_dict()['__class__'] + '.' + obj.id: obj})
 
     def save(self):
         """Saves storage dictionary to file"""
@@ -45,6 +61,20 @@ class FileStorage:
             with open(FileStorage.__file_path, 'r') as f:
                 temp = json.load(f)
                 for key, val in temp.items():
-                        self.all()[key] = classes[val['__class__']](**val)
+                    self.all()[key] = classes[val['__class__']](**val)
         except FileNotFoundError:
             pass
+
+    def delete(self, obj=None):
+        '''Delete or Remove obj from __objects if
+        it's inside - if obj is None, this method
+        does nothing
+        '''
+
+        if obj:
+            key = obj.__class__.__name__ + '.' + obj.id
+
+            try:
+                del self.__objects[key]
+            except KeyError:
+                pass
