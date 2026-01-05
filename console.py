@@ -5,6 +5,7 @@ import sys
 from models.base_model import BaseModel
 from models.__init__ import storage
 from models.user import User
+from models.state import State
 from models.place import Place
 from models.state import State
 from models.city import City
@@ -23,7 +24,7 @@ class HBNBCommand(cmd.Cmd):
                'State': State, 'City': City, 'Amenity': Amenity,
                'Review': Review
               }
-    dot_cmds = ['all', 'count', 'show', 'destroy', 'update']
+    dot_cmds = ['all', 'count', 'show', 'destroy', 'update', 'create']
     types = {
              'number_rooms': int, 'number_bathrooms': int,
              'max_guest': int, 'price_by_night': int,
@@ -45,25 +46,31 @@ class HBNBCommand(cmd.Cmd):
 
         # scan for '='s
         if ('=' in line):
+            print(f"line got here as: {line}")
             try:
                 pline = line.strip().split(' ')
 
                 pline = [char for char in pline if char != '']
                 # isolate <command>
                 _cmd = pline[0]
+                print(f"The command extracted from the line {_cmd}")
                 if _cmd not in HBNBCommand.dot_cmds:
+                    print(f"Exception got raised !")
                     raise Exception
 
                 # isolate <class name>
                 _cls = pline[1]
+                print(f"The class extracted from the line {_cls}")
 
                 # Now extract everyother given (kwargs)
                 _args = {}
 
                 kws = pline[2:]
+                print(f"Got where, I am supposed to split keywords!")
                 for kw in kws:
                     # Just assuming perfect kwargs are given
                     kw = kw.replace('"', '').split('=')
+                    print(f"here we separated them {kw}")
                     try:
                         value = int(kw[1])
                     except ValueError:
@@ -74,6 +81,7 @@ class HBNBCommand(cmd.Cmd):
                     finally:
                         _args[kw[0]] = value
                 line = ' '.join([_cmd, _cls, str(_args).replace(" ", "")])
+                print(f"line left here as {line}")
             except Exception as e:
                 print(e)
         # scan for general formating - i.e '.', '(', ')'
@@ -148,11 +156,11 @@ class HBNBCommand(cmd.Cmd):
     def do_create(self, args):
         """ Create an object of any class"""
 
+        print(f"do_create got this: {args}")
         # now almost properly formated arg
         args = args.split(" ")
-        # Re-format arg to decode spaces encoded as "_"
-        args = [arg.replace("_", " ") for arg in args]
         # args is empty? no class specified!
+        print(f"do_create refined to this: {args}")
         if not args:
             print("** class name missing **")
             return
@@ -162,12 +170,19 @@ class HBNBCommand(cmd.Cmd):
             return
         # Include more parameters, aside the class ?
         if len(args) > 1:
-            new_instance = HBNBCommand.classes[args[0]](**eval(args[1]))
+            # Re-format arg to decode spaces encoded as "_"
+            # args = [arg.replace("_", " ") for arg in args]
+            # Convert Args1 to dictionary object, from string
+            args[1] = eval(args[1])
+            # Now doing the actual Re-formating to dict object itselt
+            args[1] = {key: value.replace("_", " ") for key, value in
+                       args[1].items()}
+            new_instance = HBNBCommand.classes[args[0]](**args[1])
         else:  #: No, Not Really! just pure unadulterated object
             new_instance = HBNBCommand.classes[args[0]]()
         print(new_instance.id)
         # store to file
-        storage.save()
+        new_instance.save()  #: indirectly call storage.new() then storage.save
 
     def help_create(self):
         """ Help information for the create method """
@@ -198,7 +213,7 @@ class HBNBCommand(cmd.Cmd):
 
         key = c_name + "." + c_id
         try:
-            print(storage._FileStorage__objects[key])
+            print(storage.all()[key])
         except KeyError:
             print("** no instance found **")
 
@@ -230,7 +245,7 @@ class HBNBCommand(cmd.Cmd):
         key = c_name + "." + c_id
 
         try:
-            del (storage.all()[key])
+            storage.delete(storage.all()[key])
             storage.save()
         except KeyError:
             print("** no instance found **")
@@ -246,14 +261,16 @@ class HBNBCommand(cmd.Cmd):
 
         if args:
             args = args.split(' ')[0]  # remove possible trailing args
+            print(f"Args do_all got: {args}")
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            for k, v in storage._FileStorage__objects.items():
+            for k, v in storage.all(args).items():
                 if k.split('.')[0] == args:
                     print_list.append(str(v))
         else:
-            for k, v in storage._FileStorage__objects.items():
+            # print(storage.all())
+            for k, v in storage.all().items():
                 print_list.append(str(v))
 
         print(print_list)
@@ -266,7 +283,7 @@ class HBNBCommand(cmd.Cmd):
     def do_count(self, args):
         """Count current number of class instances"""
         count = 0
-        for k, v in storage._FileStorage__objects.items():
+        for k, v in storage.all().items():
             if args == k.split('.')[0]:
                 count += 1
         print(count)
