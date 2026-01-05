@@ -46,31 +46,25 @@ class HBNBCommand(cmd.Cmd):
 
         # scan for '='s
         if ('=' in line):
-            print(f"line got here as: {line}")
             try:
                 pline = line.strip().split(' ')
 
                 pline = [char for char in pline if char != '']
                 # isolate <command>
                 _cmd = pline[0]
-                print(f"The command extracted from the line {_cmd}")
                 if _cmd not in HBNBCommand.dot_cmds:
-                    print(f"Exception got raised !")
                     raise Exception
 
                 # isolate <class name>
                 _cls = pline[1]
-                print(f"The class extracted from the line {_cls}")
 
                 # Now extract everyother given (kwargs)
                 _args = {}
 
                 kws = pline[2:]
-                print(f"Got where, I am supposed to split keywords!")
                 for kw in kws:
                     # Just assuming perfect kwargs are given
                     kw = kw.replace('"', '').split('=')
-                    print(f"here we separated them {kw}")
                     try:
                         value = int(kw[1])
                     except ValueError:
@@ -81,7 +75,6 @@ class HBNBCommand(cmd.Cmd):
                     finally:
                         _args[kw[0]] = value
                 line = ' '.join([_cmd, _cls, str(_args).replace(" ", "")])
-                print(f"line left here as {line}")
             except Exception as e:
                 print(e)
         # scan for general formating - i.e '.', '(', ')'
@@ -156,11 +149,9 @@ class HBNBCommand(cmd.Cmd):
     def do_create(self, args):
         """ Create an object of any class"""
 
-        print(f"do_create got this: {args}")
         # now almost properly formated arg
         args = args.split(" ")
         # args is empty? no class specified!
-        print(f"do_create refined to this: {args}")
         if not args:
             print("** class name missing **")
             return
@@ -261,7 +252,6 @@ class HBNBCommand(cmd.Cmd):
 
         if args:
             args = args.split(' ')[0]  # remove possible trailing args
-            print(f"Args do_all got: {args}")
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return

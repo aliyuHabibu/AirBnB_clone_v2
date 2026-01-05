@@ -60,7 +60,6 @@ class DBStorage:
         rt_dict = {}
 
         if cls is None:
-            print("Got here")
             for mapper in Base.registry.mappers:
                 for obj in self.__session.query(mapper.class_):
                     rt_dict[mapper.class_.__name__+'.'+obj.id] = obj
