@@ -166,8 +166,8 @@ class HBNBCommand(cmd.Cmd):
             # Convert Args1 to dictionary object, from string
             args[1] = eval(args[1])
             # Now doing the actual Re-formating to dict object itselt
-            args[1] = {key: value.replace("_", " ") for key, value in
-                       args[1].items()}
+            args[1] = {key: value.replace("_", " ") if isinstance(value, str)
+                       else value for key, value in args[1].items()}
             new_instance = HBNBCommand.classes[args[0]](**args[1])
         else:  #: No, Not Really! just pure unadulterated object
             new_instance = HBNBCommand.classes[args[0]]()
