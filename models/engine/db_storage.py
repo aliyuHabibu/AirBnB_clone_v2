@@ -21,7 +21,7 @@ from models.review import Review
 
 
 # Get environmental variables
-User = getenv("HBNB_MYSQL_USER")
+Usr = getenv("HBNB_MYSQL_USER")
 Pwd = getenv("HBNB_MYSQL_PWD")
 Host = getenv("HBNB_MYSQL_HOST")
 DB = getenv("HBNB_MYSQL_DB")
@@ -39,8 +39,8 @@ class DBStorage:
     def __init__(self):
         """Initialize Connection for storage to the database
         """
-        self.__engine = create_engine("mysql+mysqldb://hbnb_dev:hbnb_dev_pwd"
-                                      "@localhost/hbnb_dev_db",
+        self.__engine = create_engine(f"mysql+mysqldb://{Usr}:{Pwd}"
+                                      f"@{Host}/{DB}",
                                       pool_pre_ping=True)
         # drop all tables in database, if env says "test"
         if Env == "test":
