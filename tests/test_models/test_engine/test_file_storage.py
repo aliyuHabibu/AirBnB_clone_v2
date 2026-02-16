@@ -107,3 +107,8 @@ class test_fileStorage(unittest.TestCase):
         from models.engine.file_storage import FileStorage
         print(type(storage))
         self.assertEqual(type(storage), FileStorage)
+
+    def test_delete(self):
+        new = BaseModel()
+        storage.delete(new)
+        self.assertNotIn(f"{new.__class__.__name__}'.'{new.id}", storage.all().keys())
